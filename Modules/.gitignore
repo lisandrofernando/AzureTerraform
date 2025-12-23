@@ -1,2 +1,4 @@
 # Ignore provider.tf files containing secrets
 **/provider.tf
+# Ignore credentials files
+**/credentials.auto.tfvars
