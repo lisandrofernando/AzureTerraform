@@ -5,6 +5,7 @@ resource "azurerm_resource_group" "rg" {
   location = var.location
 }
 
+# Create a storage account for each name in the list
 resource "azurerm_storage_account" "sa" {
   for_each                 = toset(var.storage_account_name)
   name                     = each.value
