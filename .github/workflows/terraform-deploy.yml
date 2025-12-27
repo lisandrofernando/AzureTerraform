@@ -1,0 +1,148 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+
+env:
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+jobs:
+  build:
+    name: Build - Deploy Preresources
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+    
+    - name: Terraform Format - Preresources
+      run: terraform fmt -check
+      working-directory: ./Modules/preresources
+    
+    - name: Terraform Init - Preresources
+      run: terraform init
+      working-directory: ./Modules/preresources
+    
+    - name: Terraform Validate - Preresources
+      run: terraform validate
+      working-directory: ./Modules/preresources
+    
+    - name: Terraform Plan - Preresources
+      run: terraform plan
+      working-directory: ./Modules/preresources
+    
+    - name: Terraform Apply - Preresources
+      run: terraform apply -auto-approve
+      working-directory: ./Modules/preresources
+
+  deploy-dev:
+    name: Deploy Dev
+    runs-on: ubuntu-latest
+    needs: build
+    if: success()
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+    
+    - name: Terraform Format - Dev
+      run: terraform fmt -check
+      working-directory: ./Modules/dev
+    
+    - name: Terraform Init - Dev
+      run: terraform init
+      working-directory: ./Modules/dev
+    
+    - name: Terraform Validate - Dev
+      run: terraform validate
+      working-directory: ./Modules/dev
+    
+    - name: Terraform Plan - Dev
+      run: terraform plan
+      working-directory: ./Modules/dev
+    
+    - name: Terraform Apply - Dev
+      run: terraform apply -auto-approve
+      working-directory: ./Modules/dev
+
+  deploy-qa:
+    name: Deploy QA
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    if: success()
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+    
+    - name: Terraform Format - QA
+      run: terraform fmt -check
+      working-directory: ./Modules/qa
+    
+    - name: Terraform Init - QA
+      run: terraform init
+      working-directory: ./Modules/qa
+    
+    - name: Terraform Validate - QA
+      run: terraform validate
+      working-directory: ./Modules/qa
+    
+    - name: Terraform Plan - QA
+      run: terraform plan
+      working-directory: ./Modules/qa
+    
+    - name: Terraform Apply - QA
+      run: terraform apply -auto-approve
+      working-directory: ./Modules/qa
+
+  deploy-prod:
+    name: Deploy Prod
+    runs-on: ubuntu-latest
+    needs: deploy-qa
+    if: success()
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+    
+    - name: Terraform Format - Prod
+      run: terraform fmt -check
+      working-directory: ./Modules/prod
+    
+    - name: Terraform Init - Prod
+      run: terraform init
+      working-directory: ./Modules/prod
+    
+    - name: Terraform Validate - Prod
+      run: terraform validate
+      working-directory: ./Modules/prod
+    
+    - name: Terraform Plan - Prod
+      run: terraform plan
+      working-directory: ./Modules/prod
+    
+    - name: Terraform Apply - Prod
+      run: terraform apply -auto-approve
+      working-directory: ./Modules/prod
